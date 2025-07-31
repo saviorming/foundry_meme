@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Token Launch Platform</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .token-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .token-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .token-item h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .token-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .connect-wallet {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .wallet-info {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .connect-wallet {
+                position: static;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="connect-wallet">
+        <button id="connectWallet" class="btn" style="width: auto; padding: 10px 20px;">
+            Connect Wallet
+        </button>
+        <div id="walletInfo" class="wallet-info" style="display: none; margin-top: 10px;">
+            <div id="walletAddress"></div>
+            <div id="walletBalance"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Meme Token Launch Platform</h1>
+            <p>Deploy and mint meme tokens with ease</p>
+        </div>
+
+        <div class="grid">
+            <!-- Deploy Token Card -->
+            <div class="card">
+                <h2>🎯 Deploy New Meme Token</h2>
+                <form id="deployForm">
+                    <div class="form-group">
+                        <label for="symbol">Token Symbol</label>
+                        <input type="text" id="symbol" placeholder="e.g., PEPE" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="totalSupply">Total Supply</label>
+                        <input type="number" id="totalSupply" placeholder="e.g., 1000000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="perMint">Tokens Per Mint</label>
+                        <input type="number" id="perMint" placeholder="e.g., 1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price Per Token Unit (wei)</label>
+                        <input type="number" id="price" placeholder="e.g., 1" required>
+                    </div>
+                    <button type="submit" class="btn">Deploy Token</button>
+                </form>
+                <div id="deployStatus"></div>
+            </div>
+
+            <!-- Mint Token Card -->
+            <div class="card">
+                <h2>💰 Mint Tokens</h2>
+                <form id="mintForm">
+                    <div class="form-group">
+                        <label for="tokenAddress">Token Address</label>
+                        <input type="text" id="tokenAddress" placeholder="0x..." required>
+                    </div>
+                    <button type="button" id="calculateCost" class="btn" style="margin-bottom: 15px;">
+                        Calculate Minting Cost
+                    </button>
+                    <div id="costInfo" style="display: none; margin-bottom: 15px;">
+                        <div class="status info">
+                            <div>Total Cost: <span id="totalCost"></span> ETH</div>
+                            <div>Project Fee: <span id="projectFee"></span> ETH</div>
+                            <div>Creator Fee: <span id="creatorFee"></span> ETH</div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Mint Tokens</button>
+                </form>
+                <div id="mintStatus"></div>
+            </div>
+        </div>
+
+        <!-- Deployed Tokens Card -->
+        <div class="card">
+            <h2>📋 Deployed Tokens</h2>
+            <button id="refreshTokens" class="btn" style="margin-bottom: 20px;">
+                Refresh Token List
+            </button>
+            <div id="tokenList" class="token-list">
+                <div class="status info">Connect your wallet and click "Refresh Token List" to see deployed tokens.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Contract configuration
+        const FACTORY_ADDRESS = "0x..."; // Replace with actual deployed address
+        const FACTORY_ABI = [
+            // Add the actual ABI here
+            "function deployMeme(string memory symbol, uint256 totalSupply, uint256 perMint, uint256 price) external returns (address)",
+            "function mintMeme(address tokenAddr) external payable",
+            "function getMintingCost(address tokenAddr) external view returns (uint256 totalCost, uint256 projectFee, uint256 creatorFee)",
+            "function getAllDeployedTokens() external view returns (address[] memory)",
+            "function getTokenInfo(address tokenAddr) external view returns (tuple(string symbol, uint256 totalSupply, uint256 perMint, uint256 price, address creator, bool exists))",
+            "event MemeDeployed(address indexed tokenAddress, address indexed creator, string symbol, uint256 totalSupply, uint256 perMint, uint256 price)"
+        ];
+
+        let provider, signer, contract, userAddress;
+
+        // Connect wallet
+        document.getElementById('connectWallet').addEventListener('click', async () => {
+            try {
+                if (typeof window.ethereum !== 'undefined') {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    userAddress = await signer.getAddress();
+                    contract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
+
+                    // Update UI
+                    document.getElementById('connectWallet').style.display = 'none';
+                    document.getElementById('walletInfo').style.display = 'block';
+                    document.getElementById('walletAddress').textContent = `Address: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                    
+                    // Get balance
+                    const balance = await provider.getBalance(userAddress);
+                    document.getElementById('walletBalance').textContent = `Balance: ${ethers.utils.formatEther(balance)} ETH`;
+                    
+                    showStatus('deployStatus', 'Wallet connected successfully!', 'success');
+                } else {
+                    showStatus('deployStatus', 'Please install MetaMask!', 'error');
+                }
+            } catch (error) {
+                showStatus('deployStatus', `Error connecting wallet: ${error.message}`, 'error');
+            }
+        });
+
+        // Deploy token
+        document.getElementById('deployForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!contract) {
+                showStatus('deployStatus', 'Please connect your wallet first!', 'error');
+                return;
+            }
+
+            try {
+                const symbol = document.getElementById('symbol').value;
+                const totalSupply = ethers.utils.parseEther(document.getElementById('totalSupply').value);
+                const perMint = ethers.utils.parseEther(document.getElementById('perMint').value);
+                const price = document.getElementById('price').value;
+
+                showStatus('deployStatus', 'Deploying token...', 'info');
+
+                const tx = await contract.deployMeme(symbol, totalSupply, perMint, price);
+                const receipt = await tx.wait();
+
+                // Get the deployed token address from the event
+                const event = receipt.events.find(e => e.event === 'MemeDeployed');
+                const tokenAddress = event.args.tokenAddress;
+
+                showStatus('deployStatus', `Token deployed successfully! Address: ${tokenAddress}`, 'success');
+                
+                // Clear form
+                document.getElementById('deployForm').reset();
+                
+                // Refresh token list
+                refreshTokenList();
+            } catch (error) {
+                showStatus('deployStatus', `Error deploying token: ${error.message}`, 'error');
+            }
+        });
+
+        // Calculate minting cost
+        document.getElementById('calculateCost').addEventListener('click', async () => {
+            if (!contract) {
+                showStatus('mintStatus', 'Please connect your wallet first!', 'error');
+                return;
+            }
+
+            try {
+                const tokenAddress = document.getElementById('tokenAddress').value;
+                if (!tokenAddress) {
+                    showStatus('mintStatus', 'Please enter a token address!', 'error');
+                    return;
+                }
+
+                const [totalCost, projectFee, creatorFee] = await contract.getMintingCost(tokenAddress);
+                
+                document.getElementById('totalCost').textContent = ethers.utils.formatEther(totalCost);
+                document.getElementById('projectFee').textContent = ethers.utils.formatEther(projectFee);
+                document.getElementById('creatorFee').textContent = ethers.utils.formatEther(creatorFee);
+                document.getElementById('costInfo').style.display = 'block';
+            } catch (error) {
+                showStatus('mintStatus', `Error calculating cost: ${error.message}`, 'error');
+            }
+        });
+
+        // Mint tokens
+        document.getElementById('mintForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!contract) {
+                showStatus('mintStatus', 'Please connect your wallet first!', 'error');
+                return;
+            }
+
+            try {
+                const tokenAddress = document.getElementById('tokenAddress').value;
+                const [totalCost] = await contract.getMintingCost(tokenAddress);
+
+                showStatus('mintStatus', 'Minting tokens...', 'info');
+
+                const tx = await contract.mintMeme(tokenAddress, { value: totalCost });
+                await tx.wait();
+
+                showStatus('mintStatus', 'Tokens minted successfully!', 'success');
+            } catch (error) {
+                showStatus('mintStatus', `Error minting tokens: ${error.message}`, 'error');
+            }
+        });
+
+        // Refresh token list
+        document.getElementById('refreshTokens').addEventListener('click', refreshTokenList);
+
+        async function refreshTokenList() {
+            if (!contract) {
+                showStatus('tokenList', 'Please connect your wallet first!', 'error');
+                return;
+            }
+
+            try {
+                const tokens = await contract.getAllDeployedTokens();
+                const tokenListDiv = document.getElementById('tokenList');
+                
+                if (tokens.length === 0) {
+                    tokenListDiv.innerHTML = '<div class="status info">No tokens deployed yet.</div>';
+                    return;
+                }
+
+                let html = '';
+                for (const tokenAddr of tokens) {
+                    try {
+                        const info = await contract.getTokenInfo(tokenAddr);
+                        html += `
+                            <div class="token-item">
+                                <h4>${info.symbol}</h4>
+                                <div class="token-info">
+                                    <div><strong>Address:</strong> ${tokenAddr}</div>
+                                    <div><strong>Total Supply:</strong> ${ethers.utils.formatEther(info.totalSupply)}</div>
+                                    <div><strong>Per Mint:</strong> ${ethers.utils.formatEther(info.perMint)}</div>
+                                    <div><strong>Price:</strong> ${info.price} wei</div>
+                                    <div><strong>Creator:</strong> ${info.creator}</div>
+                                </div>
+                            </div>
+                        `;
+                    } catch (error) {
+                        console.error(`Error fetching info for token ${tokenAddr}:`, error);
+                    }
+                }
+                
+                tokenListDiv.innerHTML = html;
+            } catch (error) {
+                showStatus('tokenList', `Error fetching tokens: ${error.message}`, 'error');
+            }
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Auto-connect if already connected
+        window.addEventListener('load', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    document.getElementById('connectWallet').click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
